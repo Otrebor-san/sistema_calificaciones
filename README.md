@@ -1,17 +1,54 @@
-# sistema_calificaciones
+# 📚 Sistema de Calificaciones
 
-A new Flutter project.
+Aplicación móvil desarrollada en **Flutter** para gestionar calificaciones estudiantiles.
 
-## Getting Started
+## 🚀 Tecnologías utilizadas
+- Flutter (Dart)
+- SQLite (sqflite) — persistencia local
+- Provider — gestión de estado (patrón MVVM)
+- Material Design 3
 
-This project is a starting point for a Flutter application.
+## 📋 Funcionalidades
+- ✅ Listar calificaciones activas
+- ✅ Crear nueva calificación
+- ✅ Ver detalle de calificación
+- ✅ Editar calificación existente
+- ✅ Eliminación lógica (estado A/I)
+- ✅ Búsqueda por nombre o materia
+- ✅ Filtro por rango de nota (Aprobado / Regular / Reprobado)
 
-A few resources to get you started if this is your first Flutter project:
+## 🗂 Estructura del proyecto
+```
+lib/
+├── main.dart
+├── database/
+│   └── database_helper.dart
+├── models/
+│   └── calificacion.dart
+├── providers/
+│   └── calificacion_provider.dart
+└── screens/
+    ├── lista_screen.dart
+    └── detalle_screen.dart
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## 🛠 Cómo correr el proyecto
+1. Clona el repositorio
+2. Ejecuta `flutter pub get`
+3. Ejecuta `flutter run`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 📊 Modelo de datos
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id    | INTEGER | Auto incrementable |
+| nombreEstudiante | TEXT | Nombre del estudiante |
+| materia | TEXT | Materia cursada |
+| profesor | TEXT | Nombre del profesor |
+| notaFinal | REAL | Nota entre 0 y 10 |
+| estado | TEXT | A = Activo, I = Inactivo |
+
+
+## 🎨 Interfaz
+- 🟢 Verde — Aprobado (7 - 10)
+- 🟠 Naranja — Regular (5 - 6.99)
+- 🔴 Rojo — Reprobado (0 - 4.99)
