@@ -40,17 +40,17 @@ class DatabaseHelper {
   }
 
   // Leer todos los activos
-  Future<List<Calificacion>> obtenerTodos() async {
-    final db = await database;
-    final result = await db.query(
-      'calificaciones',
-      where: 'estado = ?',
-      whereArgs: ['A'],
-      orderBy: 'nombreEstudiante ASC',
-    );
-    return result.map((map) => Calificacion.fromMap(map)).toList();
+  Future<List<Calificacion>> obtenerTodos({bool incluirInactivos = false}) async {
+  final db = await database;
+  final result = await db.query(
+    'calificaciones',
+    where: incluirInactivos ? null : 'estado = ?',
+    whereArgs: incluirInactivos ? null : ['A'],
+    orderBy: 'nombreEstudiante ASC',
+  );
+  return result.map((map) => Calificacion.fromMap(map)).toList();
   }
-
+  
   // Leer uno por id
   Future<Calificacion?> obtenerPorId(int id) async {
     final db = await database;

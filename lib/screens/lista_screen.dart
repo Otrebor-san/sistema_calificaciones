@@ -78,40 +78,78 @@ class _ListaScreenState extends State<ListaScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list, color: Colors.white),
-            onPressed: () => _mostrarFiltros(context, provider),
+            onPressed: provider.mostrarInactivos
+                ? null
+                : () => _mostrarFiltros(context, provider),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Barra de búsqueda
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: _busquedaController,
-              decoration: InputDecoration(
-                hintText: 'Buscar por estudiante o materia...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _busquedaController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _busquedaController.clear();
-                          provider.limpiarFiltros();
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: Colors.grey[100],
-              ),
-              onChanged: (value) => provider.setBusqueda(value),
+          // Switch mostrar inactivos
+          Container(
+            color: const Color(0xFF1565C0).withOpacity(0.05),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      provider.mostrarInactivos
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      size: 18,
+                      color: const Color(0xFF1565C0),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      provider.mostrarInactivos
+                          ? 'Mostrando inactivos'
+                          : 'Solo activos',
+                      style: const TextStyle(
+                          fontSize: 13, color: Color(0xFF1565C0)),
+                    ),
+                  ],
+                ),
+                Switch(
+                  value: provider.mostrarInactivos,
+                  onChanged: (_) => provider.toggleMostrarInactivos(),
+                  activeColor: const Color(0xFF1565C0),
+                ),
+              ],
             ),
           ),
 
+          // Barra de búsqueda (oculta si muestra inactivos)
+          if (!provider.mostrarInactivos)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: TextField(
+                controller: _busquedaController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por estudiante o materia...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _busquedaController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _busquedaController.clear();
+                            provider.limpiarFiltros();
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                ),
+                onChanged: (value) => provider.setBusqueda(value),
+              ),
+            ),
+
           // Chip de filtro activo
-          if (provider.filtroNota != 'todos')
+          if (provider.filtroNota != 'todos' && !provider.mostrarInactivos)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
@@ -150,83 +188,124 @@ class _ListaScreenState extends State<ListaScreen> {
                         itemCount: provider.calificaciones.length,
                         itemBuilder: (context, index) {
                           final c = provider.calificaciones[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              leading: CircleAvatar(
-                                backgroundColor: _colorNota(c.notaFinal),
-                                child: Text(
-                                  c.notaFinal.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12),
+                          final esInactivo = c.estado == 'I';
+
+                          return Opacity(
+                            opacity: esInactivo ? 0.5 : 1.0,
+                            child: Card(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: esInactivo
+                                      ? const BorderSide(
+                                          color: Colors.red, width: 1)
+                                      : BorderSide.none),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                leading: CircleAvatar(
+                                  backgroundColor: esInactivo
+                                      ? Colors.grey
+                                      : _colorNota(c.notaFinal),
+                                  child: Text(
+                                    c.notaFinal.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12),
+                                  ),
                                 ),
-                              ),
-                              title: Text(c.nombreEstudiante,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Materia: ${c.materia}'),
-                                  Text('Profesor: ${c.profesor}'),
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 4),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: _colorNota(c.notaFinal)
-                                          .withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(8),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(c.nombreEstudiante,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              decoration: esInactivo
+                                                  ? TextDecoration.lineThrough
+                                                  : null)),
                                     ),
-                                    child: Text(
-                                      _etiquetaNota(c.notaFinal),
-                                      style: TextStyle(
-                                          color: _colorNota(c.notaFinal),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.visibility,
-                                        color: Colors.blue),
-                                    onPressed: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            DetalleScreen(calificacion: c, soloVer: true),
+                                    if (esInactivo)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: const Text('INACTIVO',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold)),
                                       ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.orange),
-                                    onPressed: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            DetalleScreen(calificacion: c, soloVer: false),
+                                  ],
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Materia: ${c.materia}'),
+                                    Text('Profesor: ${c.profesor}'),
+                                    if (!esInactivo)
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: _colorNota(c.notaFinal)
+                                              .withOpacity(0.15),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          _etiquetaNota(c.notaFinal),
+                                          style: TextStyle(
+                                              color: _colorNota(c.notaFinal),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
-                                    onPressed: () =>
-                                        _confirmarEliminar(context, c),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                                trailing: esInactivo
+                                    ? null
+                                    : Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.visibility,
+                                                color: Colors.blue),
+                                            onPressed: () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => DetalleScreen(
+                                                    calificacion: c,
+                                                    soloVer: true),
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.edit,
+                                                color: Colors.orange),
+                                            onPressed: () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => DetalleScreen(
+                                                    calificacion: c,
+                                                    soloVer: false),
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red),
+                                            onPressed: () =>
+                                                _confirmarEliminar(context, c),
+                                          ),
+                                        ],
+                                      ),
                               ),
                             ),
                           );
@@ -235,26 +314,34 @@ class _ListaScreenState extends State<ListaScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const DetalleScreen(calificacion: null, soloVer: false),
-          ),
-        ),
-        backgroundColor: const Color(0xFF1565C0),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Nueva', style: TextStyle(color: Colors.white)),
-      ),
+      floatingActionButton: provider.mostrarInactivos
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const DetalleScreen(
+                      calificacion: null, soloVer: false),
+                ),
+              ),
+              backgroundColor: const Color(0xFF1565C0),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label:
+                  const Text('Nueva', style: TextStyle(color: Colors.white)),
+            ),
     );
   }
 
   String _labelFiltro(String filtro) {
     switch (filtro) {
-      case 'alta': return 'Nota: 7 - 10';
-      case 'media': return 'Nota: 5 - 6.99';
-      case 'baja': return 'Nota: 0 - 4.99';
-      default: return 'Todos';
+      case 'alta':
+        return 'Nota: 7 - 10';
+      case 'media':
+        return 'Nota: 5 - 6.99';
+      case 'baja':
+        return 'Nota: 0 - 4.99';
+      default:
+        return 'Todos';
     }
   }
 
@@ -270,7 +357,8 @@ class _ListaScreenState extends State<ListaScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Filtrar por nota',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style:
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.circle, color: Colors.green),

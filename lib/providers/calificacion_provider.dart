@@ -7,21 +7,24 @@ class CalificacionProvider extends ChangeNotifier {
 
   List<Calificacion> _calificaciones = [];
   String _busqueda = '';
-  String _filtroNota = 'todos'; // 'todos', 'alta', 'media', 'baja'
+  String _filtroNota = 'todos';
   bool _cargando = false;
+  bool _mostrarInactivos = false;
 
   // Getters
   List<Calificacion> get calificaciones => _calificaciones;
   String get busqueda => _busqueda;
   String get filtroNota => _filtroNota;
   bool get cargando => _cargando;
+  bool get mostrarInactivos => _mostrarInactivos;
 
-  // Cargar todas las calificaciones
   Future<void> cargarCalificaciones() async {
     _cargando = true;
     notifyListeners();
 
-    if (_busqueda.isNotEmpty) {
+    if (_mostrarInactivos) {
+      _calificaciones = await _db.obtenerTodos(incluirInactivos: true);
+    } else if (_busqueda.isNotEmpty) {
       _calificaciones = await _db.buscar(_busqueda);
     } else if (_filtroNota == 'alta') {
       _calificaciones = await _db.filtrarPorNota(7, 10);
@@ -37,42 +40,45 @@ class CalificacionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Crear calificacion
   Future<void> crear(Calificacion calificacion) async {
     await _db.crear(calificacion);
     await cargarCalificaciones();
   }
 
-  // Actualizar calificacion
   Future<void> actualizar(Calificacion calificacion) async {
     await _db.actualizar(calificacion);
     await cargarCalificaciones();
   }
 
-  // Eliminar calificacion (logica)
   Future<void> eliminar(int id) async {
     await _db.eliminar(id);
     await cargarCalificaciones();
   }
 
-  // Buscar por texto
   void setBusqueda(String texto) {
     _busqueda = texto;
     _filtroNota = 'todos';
     cargarCalificaciones();
   }
 
-  // Filtrar por rango de nota
   void setFiltroNota(String filtro) {
     _filtroNota = filtro;
     _busqueda = '';
     cargarCalificaciones();
   }
 
-  // Limpiar filtros
   void limpiarFiltros() {
     _busqueda = '';
     _filtroNota = 'todos';
+    cargarCalificaciones();
+  }
+
+  void toggleMostrarInactivos() {
+    _mostrarInactivos = !_mostrarInactivos;
+    if (_mostrarInactivos) {
+      _busqueda = '';
+      _filtroNota = 'todos';
+    }
     cargarCalificaciones();
   }
 }
